@@ -104,7 +104,7 @@ export function ReportsManager({ initialReports }: ReportsManagerProps) {
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
                 <th className="py-3.5 px-4">Report ID</th>
-                <th className="py-3.5 px-4">Recording Target</th>
+                <th className="py-3.5 px-4">Reported Target</th>
                 <th className="py-3.5 px-4">Reporter Reference</th>
                 <th className="py-3.5 px-4">Reason &amp; Details</th>
                 <th className="py-3.5 px-4">Status</th>
