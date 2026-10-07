@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 
 export interface SidebarNavItem {
   label: string;
@@ -25,24 +26,31 @@ export interface SidebarProps {
 }
 
 const defaultSidebarItems: SidebarNavItem[] = [
-  { label: 'Overview', href: '/', icon: '📊', active: true },
-  { label: 'Design System', href: '#components', icon: '🎨' },
-  { label: 'Architecture', href: '#architecture', icon: '⚙️' },
+  { label: 'Overview', href: '/admin', icon: '📊' },
+  { label: 'Users & Quotas', href: '/admin/users', icon: '👥' },
+  { label: 'Roles & RBAC', href: '/admin/roles', icon: '🛡️' },
+  { label: 'Prompt Templates', href: '/admin/templates', icon: '📝' },
+  { label: 'Ops DLQ Monitor', href: '/admin/pipeline/dlq', icon: '⚡', badge: 'Ops' },
+  { label: 'System Config', href: '/admin/config', icon: '⚙️' },
+  { label: 'Abuse Reports', href: '/admin/reports', icon: '🚨' },
+  { label: 'Staff Audit Logs', href: '/admin/audit-logs', icon: '📜' },
   { label: 'System Health', href: '/health', icon: '🩺', badge: 'Live' },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
-  brandName = 'NextBase Admin',
-  brandSubtitle = 'Core Backoffice',
-  brandInitials = 'NB',
+  brandName = 'Youten AI Admin',
+  brandSubtitle = 'Operational CMS',
+  brandInitials = 'YT',
   items = defaultSidebarItems,
-  currentPath = '/',
-  userName = 'Developer',
-  userRole = 'Lead Engineer',
-  userInitials = 'DE',
+  currentPath,
+  userName = 'Super Admin',
+  userRole = 'System Operator',
+  userInitials = 'SA',
   systemStatusText = 'Core API • Online',
   className = '',
 }) => {
+  const pathname = usePathname();
+  const effectivePath = currentPath ?? pathname ?? '/admin';
   return (
     <aside
       className={`w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between shrink-0 select-none ${className}`}
@@ -76,7 +84,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             Menu Navigation
           </span>
           {items.map((item) => {
-            const isActive = item.active ?? currentPath === item.href;
+            const isActive =
+              typeof item.active === 'boolean'
+                ? item.active
+                : effectivePath === item.href ||
+                  (item.href !== '/admin' && effectivePath.startsWith(`${item.href}/`));
             return (
               <Link
                 key={item.label}
