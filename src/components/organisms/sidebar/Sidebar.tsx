@@ -85,9 +85,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </span>
           {items.map((item) => {
             const isActive =
-              item.active ??
-              (effectivePath === item.href ||
-                (item.href !== '/admin' && effectivePath.startsWith(item.href)));
+              typeof item.active === 'boolean'
+                ? item.active
+                : effectivePath === item.href ||
+                  (item.href !== '/admin' && effectivePath.startsWith(item.href));
             return (
               <Link
                 key={item.label}

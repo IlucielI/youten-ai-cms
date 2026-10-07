@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { AdminAuditLogItem } from '@/server/schemas/admin.schema';
 import { apiFetchData } from '@/lib/api-client';
 import { toast } from 'sonner';
@@ -16,12 +16,14 @@ export function AuditLogsManager({ initialLogs, initialTotal }: AuditLogsManager
   const [actionFilter, setActionFilter] = useState('');
   const [entityFilter, setEntityFilter] = useState('');
   const [loading, setLoading] = useState(false);
+  const fetchRequestIdRef = useRef(0);
 
   // Inspector Modal
   const [inspectLog, setInspectLog] = useState<AdminAuditLogItem | null>(null);
 
   const fetchLogs = async (actionVal: string, entityVal: string) => {
     setLoading(true);
+    const currentReq = ++fetchRequestIdRef.current;
     try {
       const q = new URLSearchParams();
       if (actionVal.trim()) q.set('action', actionVal.trim());
@@ -30,12 +32,17 @@ export function AuditLogsManager({ initialLogs, initialTotal }: AuditLogsManager
       const data = await apiFetchData<AdminAuditLogItem[]>(
         `/api/admin/audit-logs${q.toString() ? `?${q.toString()}` : ''}`
       );
+      if (currentReq !== fetchRequestIdRef.current) return;
       setLogs(data);
       setTotal(data.length);
     } catch {
-      toast.error('Failed to load audit logs');
+      if (currentReq === fetchRequestIdRef.current) {
+        toast.error('Failed to load audit logs');
+      }
     } finally {
-      setLoading(false);
+      if (currentReq === fetchRequestIdRef.current) {
+        setLoading(false);
+      }
     }
   };
 
