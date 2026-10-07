@@ -61,8 +61,8 @@ export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) 
   const handleSaveQuota = async () => {
     if (!selectedUserForQuota) return;
     const minutes = Number(quotaMinutes);
-    if (!Number.isFinite(minutes) || minutes < 0) {
-      toast.error('Please enter a valid quota in minutes (positive number)');
+    if (!Number.isFinite(minutes) || minutes < 0 || minutes > 1440) {
+      toast.error('Please enter a valid quota between 0 and 1440 minutes (max 24 hours)');
       return;
     }
     setIsQuotaSubmitting(true);
