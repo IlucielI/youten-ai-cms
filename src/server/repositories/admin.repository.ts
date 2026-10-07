@@ -287,7 +287,7 @@ export class AdminRepository implements IAdminRepository {
         baseUrl: env.CORE_API_URL || 'http://localhost:8080',
         defaultHeaders: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${env.CORE_API_ADMIN_TOKEN || 'mock-admin-token'}`,
+          ...(env.CORE_API_ADMIN_TOKEN ? { Authorization: `Bearer ${env.CORE_API_ADMIN_TOKEN}` } : {}),
         },
       });
   }

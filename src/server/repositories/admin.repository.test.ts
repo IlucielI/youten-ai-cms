@@ -33,7 +33,8 @@ describe('AdminRepository', () => {
 
   it('overrides user quota in memory', async () => {
     const users = await repo.listUsers();
-    const userId = users.items[0].id;
+    expect(users.items.length).toBeGreaterThan(0);
+    const userId = users.items[0]!.id;
     await repo.overrideUserQuota(userId, 500);
 
     const updated = await repo.listUsers();
