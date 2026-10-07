@@ -3,10 +3,10 @@ import Link from 'next/link';
 import { adminService } from '@/server/services';
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (bytes <= 0 || !Number.isFinite(bytes)) return '0 B';
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+  const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
 }
 
@@ -23,30 +23,14 @@ export const dynamic = 'force-dynamic';
 
 export default async function AdminOverviewPage() {
   const [stats, costs] = await Promise.all([
-    adminService.getOverviewStats().catch(() => ({
-      total_users: 1240,
-      active_users: 342,
-      total_recordings: 8920,
-      completed_recordings: 8780,
-      failed_recordings: 140,
-      total_storage_bytes: 42949672960,
-      total_duration_seconds: 535200,
-    })),
-    adminService.getCostOversight().catch(() => ({
-      total_audio_minutes: 8920,
-      stt_rate_per_minute_usd: 0.0043,
-      estimated_stt_cost_usd: 38.35,
-      estimated_llm_tokens: 2450000,
-      llm_rate_per_1k_tokens_usd: 0.00015,
-      estimated_llm_cost_usd: 36.75,
-      total_estimated_cost_usd: 75.1,
-    })),
+    adminService.getOverviewStats(),
+    adminService.getCostOversight(),
   ]);
 
   const successRate =
     stats.total_recordings > 0
       ? ((stats.completed_recordings / stats.total_recordings) * 100).toFixed(1)
-      : '99.2';
+      : '100.0';
 
   return (
     <div className="space-y-8">

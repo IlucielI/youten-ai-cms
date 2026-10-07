@@ -5,10 +5,7 @@ import { ReportsManager } from './reports-manager';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminReportsPage() {
-  const result = await adminService.listReports().catch(() => ({
-    items: [],
-    total: 0,
-  }));
+  const result = await adminService.listReports();
 
   return <ReportsManager initialReports={result.items} />;
 }

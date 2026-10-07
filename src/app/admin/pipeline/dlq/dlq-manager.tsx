@@ -42,18 +42,34 @@ export function DLQManager({ initialItems }: DLQManagerProps) {
     if (!confirm(`Are you sure you want to replay all ${items.length} DLQ jobs into the pipeline?`)) return;
 
     setRetryingAll(true);
+    let successCount = 0;
+    let failCount = 0;
+    const successfulIds = new Set<string>();
+
     try {
       for (const item of items) {
-        await apiFetchData('/api/admin/pipeline/dlq/retry', {
-          method: 'POST',
-          body: JSON.stringify({
-            recording_id: item.recording_id,
-            stage: 'TRANSCRIBING',
-          }),
-        });
+        try {
+          await apiFetchData('/api/admin/pipeline/dlq/retry', {
+            method: 'POST',
+            body: JSON.stringify({
+              recording_id: item.recording_id,
+              stage: 'TRANSCRIBING',
+            }),
+          });
+          successfulIds.add(item.recording_id);
+          successCount++;
+        } catch {
+          failCount++;
+        }
       }
-      toast.success(`Successfully replayed ${items.length} DLQ jobs!`);
-      setItems([]);
+
+      setItems((prev) => prev.filter((item) => !successfulIds.has(item.recording_id)));
+
+      if (failCount === 0) {
+        toast.success(`Successfully replayed all ${successCount} DLQ jobs!`);
+      } else {
+        toast.warning(`Replayed ${successCount} jobs, ${failCount} failed to replay`);
+      }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Error occurred while replaying jobs');
     } finally {

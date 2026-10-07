@@ -60,15 +60,20 @@ export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) 
 
   const handleSaveQuota = async () => {
     if (!selectedUserForQuota) return;
+    const minutes = Number(quotaMinutes);
+    if (!Number.isFinite(minutes) || minutes < 0) {
+      toast.error('Please enter a valid quota in minutes (positive number)');
+      return;
+    }
     setIsQuotaSubmitting(true);
     try {
       await apiFetchData(`/api/admin/users/${selectedUserForQuota.id}/quota`, {
         method: 'PATCH',
-        body: JSON.stringify({ daily_quota_minutes: Number(quotaMinutes) }),
+        body: JSON.stringify({ daily_quota_minutes: minutes }),
       });
-      toast.success(`Updated daily quota for ${selectedUserForQuota.name} to ${quotaMinutes} mins`);
+      toast.success(`Updated daily quota for ${selectedUserForQuota.name} to ${minutes} mins`);
       setUsers((prev) =>
-        prev.map((u) => (u.id === selectedUserForQuota.id ? { ...u, daily_quota_minutes: Number(quotaMinutes) } : u))
+        prev.map((u) => (u.id === selectedUserForQuota.id ? { ...u, daily_quota_minutes: minutes } : u))
       );
       setSelectedUserForQuota(null);
     } catch (err: unknown) {

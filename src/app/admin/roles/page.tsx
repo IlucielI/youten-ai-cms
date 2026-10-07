@@ -5,7 +5,7 @@ import { RolesManager } from './roles-manager';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminRolesPage() {
-  const roles = await adminService.listRoles().catch(() => []);
+  const roles = await adminService.listRoles();
 
   return <RolesManager initialRoles={roles} />;
 }

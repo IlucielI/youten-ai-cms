@@ -88,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               typeof item.active === 'boolean'
                 ? item.active
                 : effectivePath === item.href ||
-                  (item.href !== '/admin' && effectivePath.startsWith(item.href));
+                  (item.href !== '/admin' && effectivePath.startsWith(`${item.href}/`));
             return (
               <Link
                 key={item.label}
