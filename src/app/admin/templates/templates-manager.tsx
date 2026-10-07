@@ -63,7 +63,12 @@ export function TemplatesManager({ initialTemplates }: TemplatesManagerProps) {
     e.preventDefault();
     let parsedSchema: Record<string, unknown> = {};
     try {
-      parsedSchema = JSON.parse(formSchemaJson);
+      const parsed = JSON.parse(formSchemaJson);
+      if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+        toast.error('Schema definition must be a valid JSON object');
+        return;
+      }
+      parsedSchema = parsed as Record<string, unknown>;
     } catch {
       toast.error('Invalid JSON in schema definition');
       return;
