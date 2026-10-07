@@ -12,6 +12,7 @@ export const EnvSchema = z.object({
   GIT_HASH: z.string().default('dev'),
   PORT: z.coerce.number().int().positive().default(3000),
   CORE_API_URL: z.string().default(''),
+  CORE_API_ADMIN_TOKEN: z.string().default('mock-admin-token'),
   MOCK_CORE_API: z
     .preprocess((val) => val === 'true' || val === true || val === '1', z.boolean())
     .default(false),
