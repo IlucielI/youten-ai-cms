@@ -126,4 +126,18 @@ describe('AdminRepository', () => {
     expect(logs.items.length).toBeGreaterThan(0);
     expect(logs.items[0].admin_username).toBeDefined();
   });
+
+  it('lists pipeline jobs and applies status and search filters', async () => {
+    const jobs = await repo.getJobs({ page: 1, limit: 10 });
+    expect(jobs.items.length).toBeGreaterThan(0);
+    expect(jobs.total).toBeGreaterThan(0);
+    expect(jobs.items[0].id).toBeDefined();
+
+    const completed = await repo.getJobs({ status: 'COMPLETED' });
+    expect(completed.items.every((j) => j.status === 'COMPLETED')).toBe(true);
+
+    const searched = await repo.getJobs({ search: 'Strategic' });
+    expect(searched.items.length).toBeGreaterThan(0);
+    expect(searched.items[0].title).toContain('Strategic');
+  });
 });

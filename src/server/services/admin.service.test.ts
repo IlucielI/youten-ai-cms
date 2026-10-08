@@ -39,6 +39,7 @@ describe('AdminService', () => {
     listReports: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     resolveReport: vi.fn().mockResolvedValue(undefined),
     listAuditLogs: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+    getJobs: vi.fn().mockResolvedValue({ items: [], total: 0, page: 1, limit: 20, total_pages: 1 }),
   };
 
   const service = new AdminService(mockRepo);
@@ -66,5 +67,10 @@ describe('AdminService', () => {
       stage: 'TRANSCRIBING',
     });
     expect(mockRepo.retryDLQJob).toHaveBeenCalled();
+  });
+
+  it('delegates getJobs to repository', async () => {
+    await service.getJobs({ page: 1, limit: 10, status: 'COMPLETED' });
+    expect(mockRepo.getJobs).toHaveBeenCalledWith({ page: 1, limit: 10, status: 'COMPLETED' });
   });
 });
