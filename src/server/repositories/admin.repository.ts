@@ -643,7 +643,8 @@ export class AdminRepository implements IAdminRepository {
         const payload = res.data ?? res;
         return AdminTemplateItemSchema.parse(payload);
       } catch (err) {
-        logger.warn('Core API createTemplate failed; using mock', { err: String(err) });
+        logger.error('Core API createTemplate failed', err, { category_key: validated.category_key });
+        throw err;
       }
     }
 
@@ -683,7 +684,8 @@ export class AdminRepository implements IAdminRepository {
         const payload = res.data ?? res;
         return AdminTemplateItemSchema.parse(payload);
       } catch (err) {
-        logger.warn('Core API updateTemplate failed; using mock', { err: String(err) });
+        logger.error('Core API updateTemplate failed', err, { id });
+        throw err;
       }
     }
 
