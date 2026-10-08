@@ -38,6 +38,10 @@ import {
   AdminAuditLogItem,
   AdminAuditLogItemSchema,
   AdminAuditLogQuery,
+  AdminJobItem,
+  AdminJobListResponse,
+  AdminJobListResponseSchema,
+  AdminJobQuery,
 } from '../schemas/admin.schema';
 import { IHttpClient, HttpClient } from '../datasources/http';
 import { env } from '../config/env';
@@ -272,6 +276,96 @@ class AdminMockStore {
       admin_full_name: 'Platform Administrator',
       payload: { is_maintenance_mode: false },
       created_at: new Date(Date.now() - 3600000 * 8).toISOString(),
+    },
+  ];
+
+  jobs: AdminJobItem[] = [
+    {
+      id: 'd1000000-0000-0000-0000-000000000001',
+      title: 'Annual Strategic Planning Meeting',
+      original_filename: 'annual_strategy_2026.mp3',
+      file_size_bytes: 48512400,
+      duration_seconds: 3620,
+      source_type: 'UPLOAD',
+      status: 'COMPLETED',
+      selected_template: 'GENERAL',
+      detected_language: 'id',
+      output_language: 'id',
+      is_guest: false,
+      user_name: 'Alex Rivera',
+      user_email: 'alex.rivera@acme.corp',
+      created_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+      updated_at: new Date(Date.now() - 3600000 * 1).toISOString(),
+    },
+    {
+      id: 'd1000000-0000-0000-0000-000000000002',
+      title: 'Product Roadmap Sprint 42 Sync',
+      original_filename: 'roadmap_sync_sprint42.m4a',
+      file_size_bytes: 25102000,
+      duration_seconds: 1845,
+      source_type: 'UPLOAD',
+      status: 'PROCESSING',
+      selected_template: 'MOM',
+      detected_language: 'id',
+      output_language: 'id',
+      is_guest: false,
+      user_name: 'Sarah Chen',
+      user_email: 'sarah.chen@techflow.io',
+      created_at: new Date(Date.now() - 1800000).toISOString(),
+      updated_at: new Date(Date.now() - 600000).toISOString(),
+    },
+    {
+      id: 'd1000000-0000-0000-0000-000000000003',
+      title: 'Customer Discovery Interview #14',
+      original_filename: 'customer_discovery_14.wav',
+      file_size_bytes: 78900000,
+      duration_seconds: 2400,
+      source_type: 'UPLOAD',
+      status: 'QUEUED',
+      selected_template: 'ONE_ON_ONE',
+      detected_language: 'en',
+      output_language: 'en',
+      is_guest: true,
+      user_name: 'Guest User',
+      user_email: null,
+      created_at: new Date(Date.now() - 300000).toISOString(),
+      updated_at: new Date(Date.now() - 300000).toISOString(),
+    },
+    {
+      id: 'd1000000-0000-0000-0000-000000000004',
+      title: 'Corrupted Audio Stream Recording',
+      original_filename: 'broken_stream_session.aac',
+      file_size_bytes: 1048576,
+      duration_seconds: 45,
+      source_type: 'UPLOAD',
+      status: 'FAILED',
+      selected_template: 'GENERAL',
+      detected_language: null,
+      output_language: 'id',
+      error_code: 'CORRUPTED_STREAM',
+      error_message: 'FFmpeg audio stream demuxing failed at offset 0x004a',
+      is_guest: false,
+      user_name: 'Marcus Vance',
+      user_email: 'marcus.vance@solaris.ai',
+      created_at: new Date(Date.now() - 86400000).toISOString(),
+      updated_at: new Date(Date.now() - 86350000).toISOString(),
+    },
+    {
+      id: 'd1000000-0000-0000-0000-000000000005',
+      title: 'Engineering All-Hands Q3 2026',
+      original_filename: 'all_hands_q3.mp3',
+      file_size_bytes: 92400100,
+      duration_seconds: 4200,
+      source_type: 'UPLOAD',
+      status: 'COMPLETED',
+      selected_template: 'GENERAL',
+      detected_language: 'id',
+      output_language: 'id',
+      is_guest: false,
+      user_name: 'Elena Rostova',
+      user_email: 'elena.rostova@quantum.org',
+      created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
+      updated_at: new Date(Date.now() - 86400000 * 3 + 300000).toISOString(),
     },
   ];
 }
@@ -817,6 +911,59 @@ export class AdminRepository implements IAdminRepository {
     } catch (err) {
       logger.warn('Core API listAuditLogs failed; using mock', { err: String(err) });
       return { items: this.mockStore.auditLogs, total: this.mockStore.auditLogs.length };
+    }
+  }
+
+  async getJobs(query?: AdminJobQuery): Promise<AdminJobListResponse> {
+    if (this.shouldUseMock()) {
+      let filtered = [...this.mockStore.jobs];
+      if (query?.status && query.status !== 'ALL') {
+        filtered = filtered.filter((j) => j.status.toUpperCase() === query.status!.toUpperCase());
+      }
+      if (query?.search) {
+        const s = query.search.toLowerCase();
+        filtered = filtered.filter(
+          (j) =>
+            j.title.toLowerCase().includes(s) ||
+            j.original_filename.toLowerCase().includes(s) ||
+            (j.user_email && j.user_email.toLowerCase().includes(s))
+        );
+      }
+      const page = query?.page ?? 1;
+      const limit = query?.limit ?? 20;
+      const total = filtered.length;
+      const totalPages = Math.ceil(total / limit) || 1;
+      const start = (page - 1) * limit;
+      const items = filtered.slice(start, start + limit);
+      return {
+        items,
+        total,
+        page,
+        limit,
+        total_pages: totalPages,
+      };
+    }
+
+    try {
+      const res = await this.client.get<CoreApiResponse<AdminJobListResponse>>('/v1/admin/jobs', {
+        params: {
+          page: query?.page ?? 1,
+          limit: query?.limit ?? 20,
+          status: query?.status && query.status !== 'ALL' ? query.status : undefined,
+          search: query?.search || undefined,
+        },
+      });
+      const data = res.data ?? res;
+      return AdminJobListResponseSchema.parse(data);
+    } catch (err) {
+      logger.warn('Core API getJobs failed; using mock fallback', { err: String(err) });
+      return {
+        items: this.mockStore.jobs,
+        total: this.mockStore.jobs.length,
+        page: 1,
+        limit: 20,
+        total_pages: 1,
+      };
     }
   }
 }

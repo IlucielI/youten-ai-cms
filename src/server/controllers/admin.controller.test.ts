@@ -50,6 +50,28 @@ describe('AdminController', () => {
     listReports: vi.fn().mockResolvedValue({ items: [], total: 0 }),
     resolveReport: vi.fn().mockResolvedValue(undefined),
     listAuditLogs: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+    getJobs: vi.fn().mockResolvedValue({
+      items: [
+        {
+          id: 'd1000000-0000-0000-0000-000000000001',
+          title: 'Test Meeting Recording',
+          original_filename: 'test.mp3',
+          file_size_bytes: 1048576,
+          duration_seconds: 120,
+          source_type: 'UPLOAD',
+          status: 'COMPLETED',
+          selected_template: 'GENERAL',
+          output_language: 'id',
+          is_guest: false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ],
+      total: 1,
+      page: 1,
+      limit: 20,
+      total_pages: 1,
+    }),
   };
 
   const controller = new AdminController(mockService);
@@ -102,5 +124,16 @@ describe('AdminController', () => {
 
     const res = await controller.overrideUserQuota(req, '123');
     expect(res.status).toBe(400);
+  });
+
+  it('handles getJobs with query filters and returns 200 JSON', async () => {
+    const req = new Request('http://localhost:3000/api/admin/jobs?page=1&limit=20&status=COMPLETED');
+    const res = await controller.getJobs(req);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe('success');
+    expect(body.data.length).toBe(1);
+    expect(body.pagination.total).toBe(1);
+    expect(body.pagination.totalPages).toBe(1);
   });
 });
