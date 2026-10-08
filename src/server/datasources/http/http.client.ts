@@ -84,7 +84,10 @@ export class HttpClient implements IHttpClient {
       ...options?.headers,
     };
 
-    if (this.authHeaderResolver && !headers['Authorization']) {
+    const hasAuthHeader = Object.keys(headers).some(
+      (key) => key.toLowerCase() === 'authorization'
+    );
+    if (this.authHeaderResolver && !hasAuthHeader) {
       const resolved = await this.authHeaderResolver();
       if (resolved) {
         headers['Authorization'] = resolved;

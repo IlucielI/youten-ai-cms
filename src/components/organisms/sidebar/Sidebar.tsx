@@ -92,12 +92,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
     if (isLoggingOut) return;
     setIsLoggingOut(true);
     try {
-      await fetch('/api/auth/logout', { method: 'POST' });
+      const res = await fetch('/api/auth/logout', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error('Failed to logout');
+      }
     } catch {
-      // ignore network errors
+      // fallback to redirect even if network glitch occurs
     } finally {
+      try {
+        document.cookie = 'admin_user_info=; Max-Age=0; path=/';
+      } catch {
+        // ignore
+      }
       router.push('/login');
       router.refresh();
+      setIsLoggingOut(false);
     }
   };
 
