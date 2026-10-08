@@ -89,7 +89,13 @@ describe('AdminService', () => {
       is_default: false,
       permissions: ['recordings:create'],
     });
-    expect(mockRepo.createUserRole).toHaveBeenCalled();
+    expect(mockRepo.createUserRole).toHaveBeenCalledWith({
+      code: 'pro',
+      name: 'Pro',
+      description: 'Pro tier',
+      is_default: false,
+      permissions: ['recordings:create'],
+    });
 
     await service.updateUserRole('ur-1', {
       name: 'Pro Updated',
