@@ -15,6 +15,7 @@ import {
   AdminUpdateSystemConfigRequestSchema,
   AdminResolveReportRequestSchema,
   AdminAuditLogQuerySchema,
+  AdminJobQuerySchema,
 } from '../schemas/admin.schema';
 
 export class AdminController extends BaseController {
@@ -210,6 +211,23 @@ export class AdminController extends BaseController {
           page: query.page,
           limit: query.limit,
           totalPages: Math.ceil(res.total / query.limit) || 1,
+        },
+      };
+    });
+  }
+
+  async getJobs(req: Request): Promise<NextResponse> {
+    return this.handle(req, async () => {
+      const query = this.getQuery(req, AdminJobQuerySchema);
+      const res = await this.service.getJobs(query);
+      return {
+        status: 'success',
+        data: res.items,
+        pagination: {
+          total: res.total,
+          page: res.page,
+          limit: res.limit,
+          totalPages: res.total_pages,
         },
       };
     });

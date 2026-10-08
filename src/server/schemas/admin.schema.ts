@@ -603,3 +603,46 @@ export const AdminAuditLogQuerySchema = PaginationQuerySchema.extend({
 });
 
 export type AdminAuditLogQuery = Partial<z.infer<typeof AdminAuditLogQuerySchema>>;
+
+/**
+ * -----------------------------------------------------------------------------
+ * 10. Generation & Pipeline Jobs Console
+ * -----------------------------------------------------------------------------
+ */
+
+export const AdminJobItemSchema = z.object({
+  id: z.string().uuid(),
+  title: z.string(),
+  original_filename: z.string(),
+  file_size_bytes: z.number().int().default(0),
+  duration_seconds: z.number().default(0),
+  source_type: z.string().default('UPLOAD'),
+  status: z.string(),
+  selected_template: z.string().default('GENERAL'),
+  detected_language: z.string().nullable().optional(),
+  output_language: z.string().default('id'),
+  error_message: z.string().nullable().optional(),
+  error_code: z.string().nullable().optional(),
+  is_guest: z.boolean().default(false),
+  user_name: z.string().nullable().optional(),
+  user_email: z.string().nullable().optional(),
+  created_at: z.string(),
+  updated_at: z.string(),
+});
+export type AdminJobItem = z.infer<typeof AdminJobItemSchema>;
+
+export const AdminJobListResponseSchema = z.object({
+  items: z.array(AdminJobItemSchema),
+  total: z.number().int(),
+  page: z.number().int().default(1),
+  limit: z.number().int().default(20),
+  total_pages: z.number().int().default(1),
+});
+export type AdminJobListResponse = z.infer<typeof AdminJobListResponseSchema>;
+
+export const AdminJobQuerySchema = PaginationQuerySchema.extend({
+  status: z.string().optional(),
+  search: z.string().optional(),
+});
+export type AdminJobQuery = Partial<z.infer<typeof AdminJobQuerySchema>>;
+

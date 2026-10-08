@@ -19,6 +19,8 @@ import {
   AdminResolveReportRequest,
   AdminAuditLogItem,
   AdminAuditLogQuery,
+  AdminJobListResponse,
+  AdminJobQuery,
 } from '../schemas/admin.schema';
 
 export interface IAdminService {
@@ -41,4 +43,5 @@ export interface IAdminService {
   listReports(query?: { status?: string; page?: number; limit?: number }): Promise<{ items: AdminReportItem[]; total: number }>;
   resolveReport(id: string, data: AdminResolveReportRequest): Promise<void>;
   listAuditLogs(query?: AdminAuditLogQuery): Promise<{ items: AdminAuditLogItem[]; total: number }>;
+  getJobs(query?: AdminJobQuery): Promise<AdminJobListResponse>;
 }

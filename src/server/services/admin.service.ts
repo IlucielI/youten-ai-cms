@@ -22,6 +22,8 @@ import {
   AdminResolveReportRequest,
   AdminAuditLogItem,
   AdminAuditLogQuery,
+  AdminJobListResponse,
+  AdminJobQuery,
 } from '../schemas/admin.schema';
 
 export class AdminService implements IAdminService {
@@ -101,6 +103,10 @@ export class AdminService implements IAdminService {
 
   async listAuditLogs(query?: AdminAuditLogQuery): Promise<{ items: AdminAuditLogItem[]; total: number }> {
     return this.repo.listAuditLogs(query);
+  }
+
+  async getJobs(query?: AdminJobQuery): Promise<AdminJobListResponse> {
+    return this.repo.getJobs(query);
   }
 }
 
