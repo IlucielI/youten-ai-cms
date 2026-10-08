@@ -140,4 +140,35 @@ describe('AdminRepository', () => {
     expect(searched.items.length).toBeGreaterThan(0);
     expect(searched.items[0].title).toContain('Strategic');
   });
+
+  it('manages customer user roles: list, create, update, and assign to user', async () => {
+    const roles = await repo.listUserRoles();
+    expect(roles.length).toBeGreaterThanOrEqual(1);
+
+    const created = await repo.createUserRole({
+      code: 'tester',
+      name: 'Tester Tier',
+      description: 'Testing tier privileges',
+      is_default: false,
+      permissions: ['recordings:create', 'recordings:read'],
+    });
+    expect(created.code).toBe('tester');
+    expect(created.name).toBe('Tester Tier');
+
+    const updated = await repo.updateUserRole(created.id, {
+      name: 'Updated Tester Tier',
+      description: 'Updated description',
+      permissions: ['recordings:create', 'recordings:read', 'recordings:export'],
+    });
+    expect(updated.name).toBe('Updated Tester Tier');
+    expect(updated.permissions).toContain('recordings:export');
+
+    const users = await repo.listUsers();
+    expect(users.items.length).toBeGreaterThan(0);
+    const userId = users.items[0]!.id;
+
+    const assignedUser = await repo.assignUserRole(userId, { role_id: created.id });
+    expect(assignedUser.role_id).toBe(created.id);
+    expect(assignedUser.role_code).toBe('tester');
+  });
 });

@@ -8,6 +8,9 @@ import {
   AdminOverrideQuotaRequestSchema,
   AdminCreateRoleRequestSchema,
   AdminUpdateRoleRequestSchema,
+  AdminCreateUserRoleRequestSchema,
+  AdminUpdateUserRoleRequestSchema,
+  AdminAssignUserRoleRequestSchema,
   AdminCreateTemplateRequestSchema,
   AdminUpdateTemplateRequestSchema,
   AdminTestTemplateRequestSchema,
@@ -91,6 +94,37 @@ export class AdminController extends BaseController {
     return this.handle(req, async () => {
       const body = await this.getBody(req, AdminUpdateRoleRequestSchema);
       const data = await this.service.updateRole(roleId, body);
+      return { status: 'success', data };
+    });
+  }
+
+  async listUserRoles(req?: Request): Promise<NextResponse> {
+    return this.handle(req, async () => {
+      const data = await this.service.listUserRoles();
+      return { status: 'success', data };
+    });
+  }
+
+  async createUserRole(req: Request): Promise<NextResponse> {
+    return this.handle(req, async () => {
+      const body = await this.getBody(req, AdminCreateUserRoleRequestSchema);
+      const data = await this.service.createUserRole(body);
+      return { status: 'success', data };
+    }, { status: 201 });
+  }
+
+  async updateUserRole(req: Request, roleId: string): Promise<NextResponse> {
+    return this.handle(req, async () => {
+      const body = await this.getBody(req, AdminUpdateUserRoleRequestSchema);
+      const data = await this.service.updateUserRole(roleId, body);
+      return { status: 'success', data };
+    });
+  }
+
+  async assignUserRole(req: Request, userId: string): Promise<NextResponse> {
+    return this.handle(req, async () => {
+      const body = await this.getBody(req, AdminAssignUserRoleRequestSchema);
+      const data = await this.service.assignUserRole(userId, body);
       return { status: 'success', data };
     });
   }

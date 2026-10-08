@@ -99,6 +99,9 @@ export interface AdminUserItem {
   name: string;
   full_name?: string;
   status: string;
+  role_id?: string;
+  role_code?: string;
+  role_name?: string;
   daily_quota?: number;
   daily_quota_minutes: number;
   quota_used_today?: number;
@@ -113,6 +116,9 @@ export const AdminUserItemSchema: z.ZodType<AdminUserItem> = z.object({
   name: z.string().optional(),
   full_name: z.string().optional(),
   status: z.string(),
+  role_id: z.string().uuid().optional(),
+  role_code: z.string().optional(),
+  role_name: z.string().optional(),
   daily_quota: z.number().int().optional(),
   daily_quota_minutes: z.number().int().optional(),
   quota_used_today: z.number().int().optional(),
@@ -197,6 +203,85 @@ export const AdminUpdateRoleRequestSchema = z.object({
   description: z.string().optional(),
   permissions: z.array(z.string()).optional(),
 });
+
+export interface AdminUserRoleItem {
+  id: string;
+  name: string;
+  code: string;
+  description: string;
+  permissions: string[];
+  daily_quota: number;
+  is_default: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export const AdminUserRoleItemSchema: z.ZodType<AdminUserRoleItem> = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  code: z.string(),
+  description: z.string().default(''),
+  permissions: z.array(z.string()),
+  daily_quota: z.number().int().default(5),
+  is_default: z.boolean().default(false),
+  created_at: z.string().optional(),
+  updated_at: z.string().optional(),
+});
+
+export interface AdminCreateUserRoleRequest {
+  name: string;
+  code: string;
+  description?: string;
+  permissions?: string[];
+  daily_quota?: number;
+  is_default?: boolean;
+}
+
+export const AdminCreateUserRoleRequestSchema = z.object({
+  name: z.string().min(1, 'Name is required').max(100),
+  code: z.string().min(1, 'Code is required').max(50),
+  description: z.string().max(500).optional().default(''),
+  permissions: z.array(z.string()).optional().default([]),
+  daily_quota: z.number().int().min(1).max(1000).default(5),
+  is_default: z.boolean().optional().default(false),
+});
+
+export interface AdminUpdateUserRoleRequest {
+  name?: string;
+  description?: string;
+  permissions?: string[];
+  daily_quota?: number;
+  is_default?: boolean;
+}
+
+export const AdminUpdateUserRoleRequestSchema = z.object({
+  name: z.string().min(1).max(100).optional(),
+  description: z.string().max(500).optional(),
+  permissions: z.array(z.string()).optional(),
+  daily_quota: z.number().int().min(1).max(1000).optional(),
+  is_default: z.boolean().optional(),
+});
+
+export interface AdminAssignUserRoleRequest {
+  role_id: string;
+}
+
+export const AdminAssignUserRoleRequestSchema = z.object({
+  role_id: z.string().uuid('Valid Role ID is required'),
+});
+
+export const CANONICAL_USER_PERMISSIONS = [
+  { id: 'recordings:create', label: 'Create Recordings', category: 'Recordings' },
+  { id: 'recordings:read', label: 'View & Stream Recordings', category: 'Recordings' },
+  { id: 'recordings:chat', label: 'AI Chat with Recording', category: 'AI Intelligence' },
+  { id: 'recordings:share', label: 'Generate Public Share Links', category: 'Collaboration' },
+  { id: 'recordings:search', label: 'Workspace Vector Search', category: 'Discovery' },
+  { id: 'workspace:memory', label: 'Long-term Memory Context', category: 'AI Intelligence' },
+  { id: 'speakers:manage', label: 'Edit & Label Speaker Names', category: 'Collaboration' },
+  { id: 'export:pdf', label: 'Export Summaries as PDF', category: 'Export' },
+  { id: 'profile:manage', label: 'Update Profile & Settings', category: 'Account' },
+  { id: 'recordings:*', label: 'Full Access to All Recording Features', category: 'Wildcard' },
+] as const;
 
 /**
  * -----------------------------------------------------------------------------

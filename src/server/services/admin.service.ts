@@ -9,6 +9,10 @@ import {
   AdminRoleItem,
   AdminCreateRoleRequest,
   AdminUpdateRoleRequest,
+  AdminUserRoleItem,
+  AdminCreateUserRoleRequest,
+  AdminUpdateUserRoleRequest,
+  AdminAssignUserRoleRequest,
   AdminTemplateItem,
   AdminCreateTemplateRequest,
   AdminUpdateTemplateRequest,
@@ -59,6 +63,22 @@ export class AdminService implements IAdminService {
 
   async updateRole(id: string, data: AdminUpdateRoleRequest): Promise<AdminRoleItem> {
     return this.repo.updateRole(id, data);
+  }
+
+  async listUserRoles(): Promise<AdminUserRoleItem[]> {
+    return this.repo.listUserRoles();
+  }
+
+  async createUserRole(data: AdminCreateUserRoleRequest): Promise<AdminUserRoleItem> {
+    return this.repo.createUserRole(data);
+  }
+
+  async updateUserRole(id: string, data: AdminUpdateUserRoleRequest): Promise<AdminUserRoleItem> {
+    return this.repo.updateUserRole(id, data);
+  }
+
+  async assignUserRole(userId: string, data: AdminAssignUserRoleRequest): Promise<AdminUserItem> {
+    return this.repo.assignUserRole(userId, data);
   }
 
   async listTemplates(): Promise<AdminTemplateItem[]> {

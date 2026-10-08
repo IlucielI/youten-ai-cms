@@ -6,6 +6,10 @@ import {
   AdminRoleItem,
   AdminCreateRoleRequest,
   AdminUpdateRoleRequest,
+  AdminUserRoleItem,
+  AdminCreateUserRoleRequest,
+  AdminUpdateUserRoleRequest,
+  AdminAssignUserRoleRequest,
   AdminTemplateItem,
   AdminCreateTemplateRequest,
   AdminUpdateTemplateRequest,
@@ -32,6 +36,10 @@ export interface IAdminRepository {
   listRoles(): Promise<AdminRoleItem[]>;
   createRole(data: AdminCreateRoleRequest): Promise<AdminRoleItem>;
   updateRole(id: string, data: AdminUpdateRoleRequest): Promise<AdminRoleItem>;
+  listUserRoles(): Promise<AdminUserRoleItem[]>;
+  createUserRole(data: AdminCreateUserRoleRequest): Promise<AdminUserRoleItem>;
+  updateUserRole(id: string, data: AdminUpdateUserRoleRequest): Promise<AdminUserRoleItem>;
+  assignUserRole(userId: string, data: AdminAssignUserRoleRequest): Promise<AdminUserItem>;
   listTemplates(): Promise<AdminTemplateItem[]>;
   createTemplate(data: AdminCreateTemplateRequest): Promise<AdminTemplateItem>;
   updateTemplate(id: string, data: AdminUpdateTemplateRequest): Promise<AdminTemplateItem>;
