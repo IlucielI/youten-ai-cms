@@ -18,6 +18,7 @@ export interface HttpClientConfig {
   baseUrl?: string;
   defaultTimeoutMs?: number;
   defaultHeaders?: Record<string, string>;
+  authHeaderResolver?: () => Promise<string | null> | string | null;
   logger?: ILogger;
 }
 
@@ -35,12 +36,14 @@ export class HttpClient implements IHttpClient {
   private readonly baseUrl: string;
   private readonly defaultTimeoutMs: number;
   private readonly defaultHeaders: Record<string, string>;
+  private readonly authHeaderResolver?: () => Promise<string | null> | string | null;
   private readonly logger?: ILogger;
 
   constructor(config: HttpClientConfig = {}) {
     this.baseUrl = (config.baseUrl || '').replace(/\/$/, '');
     this.defaultTimeoutMs = config.defaultTimeoutMs ?? 5000;
     this.defaultHeaders = config.defaultHeaders || {};
+    this.authHeaderResolver = config.authHeaderResolver;
     this.logger = config.logger;
   }
 
@@ -80,6 +83,16 @@ export class HttpClient implements IHttpClient {
       ...this.defaultHeaders,
       ...options?.headers,
     };
+
+    const hasAuthHeader = Object.keys(headers).some(
+      (key) => key.toLowerCase() === 'authorization'
+    );
+    if (this.authHeaderResolver && !hasAuthHeader) {
+      const resolved = await this.authHeaderResolver();
+      if (resolved) {
+        headers['Authorization'] = resolved;
+      }
+    }
 
     if (options?.requestId) {
       headers[REQUEST_ID_HEADER] = options.requestId;

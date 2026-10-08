@@ -1,8 +1,8 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 
 export interface SidebarNavItem {
   label: string;
@@ -50,8 +50,70 @@ export const Sidebar: React.FC<SidebarProps> = ({
   systemStatusText = 'Core API • Online',
   className = '',
 }) => {
+  const router = useRouter();
   const pathname = usePathname();
   const effectivePath = currentPath ?? pathname ?? '/admin';
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [sessionUser, setSessionUser] = useState<{
+    name?: string;
+    role?: string;
+    initials?: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const match = document.cookie.match(/(?:^|; )admin_user_info=([^;]*)/);
+        if (match && match[1]) {
+          const decoded = decodeURIComponent(match[1]);
+          const data = JSON.parse(decoded);
+          const name = data.full_name || data.name || data.username || userName;
+          const initials =
+            name
+              .split(' ')
+              .map((n: string) => n[0])
+              .slice(0, 2)
+              .join('')
+              .toUpperCase() || userInitials;
+          setSessionUser({
+            name,
+            role: data.role_name || data.role || userRole,
+            initials,
+          });
+        }
+      } catch {
+        // ignore cookie parse error
+      }
+    }, 0);
+    return () => clearTimeout(timer);
+  }, [userName, userRole, userInitials]);
+
+  const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    try {
+      const res = await fetch('/api/auth/logout', { method: 'POST' });
+      if (!res.ok) {
+        throw new Error('Failed to logout');
+      }
+    } catch {
+      // fallback to redirect even if network glitch occurs
+    } finally {
+      try {
+        document.cookie = 'admin_user_info=; Max-Age=0; path=/';
+      } catch {
+        // ignore
+      }
+      router.push('/login');
+      router.refresh();
+      setIsLoggingOut(false);
+    }
+  };
+
+  const activeName = sessionUser?.name || userName;
+  const activeRole = sessionUser?.role || userRole;
+  const activeInitials = sessionUser?.initials || userInitials;
+
   return (
     <aside
       className={`w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between shrink-0 select-none ${className}`}
@@ -121,14 +183,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* User Profile Card */}
       <div className="p-4 border-t border-slate-800/80">
-        <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold ring-2 ring-slate-700">
-            {userInitials}
+        <div className="p-3 rounded-lg bg-slate-900/90 border border-slate-800 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center text-xs font-bold ring-2 ring-slate-700 shrink-0">
+              {activeInitials}
+            </div>
+            <div className="flex flex-col min-w-0">
+              <span className="text-xs font-bold text-white truncate">{activeName}</span>
+              <span className="text-[10px] font-medium text-slate-400 truncate">{activeRole}</span>
+            </div>
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="text-xs font-bold text-white truncate">{userName}</span>
-            <span className="text-[10px] font-medium text-slate-400 truncate">{userRole}</span>
-          </div>
+          <button
+            type="button"
+            id="sidebar-logout-button"
+            title="Sign Out"
+            aria-label="Sign Out of Console"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="p-1.5 rounded-md text-slate-400 hover:text-red-400 hover:bg-slate-800/80 transition-colors disabled:opacity-50 shrink-0 cursor-pointer"
+          >
+            <svg
+              className={`w-4 h-4 ${isLoggingOut ? 'animate-spin' : ''}`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+              />
+            </svg>
+          </button>
         </div>
       </div>
     </aside>
