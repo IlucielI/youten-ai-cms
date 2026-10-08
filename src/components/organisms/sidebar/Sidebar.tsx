@@ -27,6 +27,7 @@ export interface SidebarProps {
 
 const defaultSidebarItems: SidebarNavItem[] = [
   { label: 'Overview', href: '/admin', icon: '📊' },
+  { label: 'Pipeline Jobs', href: '/admin/jobs', icon: '🎬', badge: 'Live' },
   { label: 'Users & Quotas', href: '/admin/users', icon: '👥' },
   { label: 'Roles & RBAC', href: '/admin/roles', icon: '🛡️' },
   { label: 'Prompt Templates', href: '/admin/templates', icon: '📝' },
