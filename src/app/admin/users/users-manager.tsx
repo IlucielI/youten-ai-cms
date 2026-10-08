@@ -1,18 +1,20 @@
 'use client';
 
 import React, { useState } from 'react';
-import { AdminUserItem } from '@/server/schemas/admin.schema';
+import { AdminUserItem, AdminUserRoleItem } from '@/server/schemas/admin.schema';
 import { apiFetchData } from '@/lib/api-client';
 import { toast } from 'sonner';
 
 interface UsersManagerProps {
   initialUsers: AdminUserItem[];
   initialTotal: number;
+  initialUserRoles?: AdminUserRoleItem[];
 }
 
-export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) {
+export function UsersManager({ initialUsers, initialTotal, initialUserRoles = [] }: UsersManagerProps) {
   const [users, setUsers] = useState<AdminUserItem[]>(initialUsers);
   const [total, setTotal] = useState<number>(initialTotal);
+  const [userRoles] = useState<AdminUserRoleItem[]>(initialUserRoles);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('ALL');
   const [loading, setLoading] = useState(false);
@@ -21,6 +23,11 @@ export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) 
   const [selectedUserForQuota, setSelectedUserForQuota] = useState<AdminUserItem | null>(null);
   const [quotaMinutes, setQuotaMinutes] = useState<number>(60);
   const [isQuotaSubmitting, setIsQuotaSubmitting] = useState(false);
+
+  // Role Assignment Modal State
+  const [selectedUserForRole, setSelectedUserForRole] = useState<AdminUserItem | null>(null);
+  const [selectedRoleId, setSelectedRoleId] = useState<string>('');
+  const [isRoleSubmitting, setIsRoleSubmitting] = useState(false);
 
   // Revoke Session State
   const [revokingUserId, setRevokingUserId] = useState<string | null>(null);
@@ -83,6 +90,44 @@ export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) 
     }
   };
 
+  const handleOpenRoleModal = (user: AdminUserItem) => {
+    setSelectedUserForRole(user);
+    setSelectedRoleId(user.role_id || (userRoles[0]?.id ?? ''));
+  };
+
+  const handleSaveRole = async () => {
+    if (!selectedUserForRole || !selectedRoleId) {
+      toast.error('Please select a role to assign');
+      return;
+    }
+    setIsRoleSubmitting(true);
+    try {
+      await apiFetchData(`/api/admin/users/${selectedUserForRole.id}/role`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role_id: selectedRoleId }),
+      });
+      const assignedRole = userRoles.find((r) => r.id === selectedRoleId);
+      toast.success(`Assigned role ${assignedRole?.name || selectedRoleId} to ${selectedUserForRole.name}`);
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === selectedUserForRole.id
+            ? {
+                ...u,
+                role_id: selectedRoleId,
+                role_code: assignedRole?.code,
+                role_name: assignedRole?.name,
+              }
+            : u
+        )
+      );
+      setSelectedUserForRole(null);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to assign role');
+    } finally {
+      setIsRoleSubmitting(false);
+    }
+  };
+
   const handleRevokeSessions = async (user: AdminUserItem) => {
     if (!confirm(`Are you sure you want to revoke all active sessions for ${user.email}? The user will be immediately logged out.`)) {
       return;
@@ -107,7 +152,7 @@ export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) 
         <div>
           <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Users & Quota Governance</h1>
           <p className="text-xs text-slate-500 mt-1">
-            Oversee registered users, assign recording allowances, and enforce security session revocation.
+            Oversee registered users, assign customer role tiers and recording allowances, and enforce security session revocation.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -164,6 +209,7 @@ export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) 
               <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-600 font-bold uppercase tracking-wider text-[11px]">
                 <th className="py-3.5 px-4">User</th>
                 <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4">Role Tier</th>
                 <th className="py-3.5 px-4">Daily Quota</th>
                 <th className="py-3.5 px-4">Created Date</th>
                 <th className="py-3.5 px-4 text-right">Actions</th>
@@ -172,13 +218,13 @@ export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) 
             <tbody className="divide-y divide-slate-100">
               {loading ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                  <td colSpan={6} className="py-8 text-center text-slate-400">
                     Loading users list...
                   </td>
                 </tr>
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400">
+                  <td colSpan={6} className="py-8 text-center text-slate-400">
                     No users found matching query.
                   </td>
                 </tr>
@@ -210,6 +256,19 @@ export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) 
                       </span>
                     </td>
                     <td className="py-3.5 px-4">
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-semibold border ${
+                          user.role_code === 'enterprise'
+                            ? 'bg-purple-50 text-purple-700 border-purple-200'
+                            : user.role_code === 'pro'
+                            ? 'bg-indigo-50 text-indigo-700 border-indigo-200'
+                            : 'bg-slate-50 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        {user.role_name || user.role_code || 'Free Plan'}
+                      </span>
+                    </td>
+                    <td className="py-3.5 px-4">
                       <span className="font-mono font-semibold text-slate-800">
                         {user.daily_quota_minutes} min/day
                       </span>
@@ -219,6 +278,12 @@ export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) 
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleOpenRoleModal(user)}
+                          className="px-2.5 py-1 text-xs font-semibold rounded-md bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition-colors"
+                        >
+                          Role Tier
+                        </button>
                         <button
                           onClick={() => handleOpenQuotaModal(user)}
                           className="px-2.5 py-1 text-xs font-semibold rounded-md bg-slate-100 text-slate-700 hover:bg-slate-200 transition-colors"
@@ -241,6 +306,97 @@ export function UsersManager({ initialUsers, initialTotal }: UsersManagerProps) 
           </table>
         </div>
       </div>
+
+      {/* Role Assignment Modal Dialog */}
+      {selectedUserForRole && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h3 className="text-base font-bold text-slate-900">Assign Customer User Role</h3>
+              <button
+                onClick={() => setSelectedUserForRole(null)}
+                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 mb-4">
+              Update RBAC role tier and feature entitlements for{' '}
+              <strong className="text-slate-900">{selectedUserForRole.name}</strong> ({selectedUserForRole.email}).
+            </p>
+
+            <div className="space-y-3">
+              <label className="block text-xs font-semibold text-slate-700">
+                Select Customer Role Tier
+              </label>
+              {userRoles.length === 0 ? (
+                <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 text-xs text-amber-800">
+                  No customer user roles configured yet. Please create a role in Role Management first.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-60 overflow-y-auto">
+                  {userRoles.map((role) => {
+                    const isSelected = selectedRoleId === role.id;
+                    return (
+                      <label
+                        key={role.id}
+                        className={`flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-indigo-50/80 border-indigo-400 shadow-xs'
+                            : 'bg-white border-slate-200 hover:bg-slate-50'
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="roleSelection"
+                          value={role.id}
+                          checked={isSelected}
+                          onChange={() => setSelectedRoleId(role.id)}
+                          className="mt-1 text-indigo-600 focus:ring-indigo-500"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900">{role.name}</span>
+                            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-600">
+                              {role.code}
+                            </span>
+                          </div>
+                          {role.description && (
+                            <p className="text-[11px] text-slate-500 mt-0.5 line-clamp-1">{role.description}</p>
+                          )}
+                          <p className="text-[10px] text-indigo-600 font-medium mt-1">
+                            {role.permissions.length} capabilities granted
+                            {role.is_default && ' • (Default Tier)'}
+                          </p>
+                        </div>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setSelectedUserForRole(null)}
+                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-slate-600 hover:bg-slate-100"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveRole}
+                disabled={isRoleSubmitting || !selectedRoleId}
+                className="px-4 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm disabled:opacity-50"
+              >
+                {isRoleSubmitting ? 'Assigning...' : 'Assign Role'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Quota Override Modal Dialog */}
       {selectedUserForQuota && (

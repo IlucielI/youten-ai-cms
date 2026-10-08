@@ -5,7 +5,10 @@ import { RolesManager } from './roles-manager';
 export const dynamic = 'force-dynamic';
 
 export default async function AdminRolesPage() {
-  const roles = await adminService.listRoles();
+  const [roles, userRoles] = await Promise.all([
+    adminService.listRoles(),
+    adminService.listUserRoles(),
+  ]);
 
-  return <RolesManager initialRoles={roles} />;
+  return <RolesManager initialRoles={roles} initialUserRoles={userRoles} />;
 }

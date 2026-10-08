@@ -13,6 +13,14 @@ import {
   AdminCreateRoleRequest,
   AdminCreateRoleRequestSchema,
   AdminUpdateRoleRequest,
+  AdminUserRoleItem,
+  AdminUserRoleItemSchema,
+  AdminCreateUserRoleRequest,
+  AdminCreateUserRoleRequestSchema,
+  AdminUpdateUserRoleRequest,
+  AdminUpdateUserRoleRequestSchema,
+  AdminAssignUserRoleRequest,
+  AdminAssignUserRoleRequestSchema,
   AdminTemplateItem,
   AdminTemplateItemSchema,
   AdminCreateTemplateRequest,
@@ -138,6 +146,31 @@ class AdminMockStore {
       permissions: ['ops:read', 'ops:write', 'config:read', 'analytics:read'],
       is_system: false,
       created_at: new Date(Date.now() - 86400000 * 40).toISOString(),
+    },
+  ];
+
+  userRoles: AdminUserRoleItem[] = [
+    {
+      id: '20000000-0000-4000-8000-000000000020',
+      name: 'Free Member',
+      code: 'FREE',
+      description: 'Standard free tier with default daily quota and baseline access',
+      permissions: ['recordings:create', 'recordings:read', 'recordings:chat', 'recordings:share', 'profile:manage'],
+      daily_quota: 5,
+      is_default: true,
+      created_at: new Date(Date.now() - 86400000 * 100).toISOString(),
+      updated_at: new Date(Date.now() - 86400000 * 100).toISOString(),
+    },
+    {
+      id: '20000000-0000-4000-8000-000000000021',
+      name: 'Pro Member',
+      code: 'PRO',
+      description: 'Professional tier with PDF export, workspace memory, vector search, and higher quota',
+      permissions: ['recordings:*', 'workspace:search', 'workspace:memory', 'export:pdf', 'profile:manage'],
+      daily_quota: 25,
+      is_default: false,
+      created_at: new Date(Date.now() - 86400000 * 50).toISOString(),
+      updated_at: new Date(Date.now() - 86400000 * 50).toISOString(),
     },
   ];
 
@@ -593,6 +626,127 @@ export class AdminRepository implements IAdminRepository {
     }
 
     return role || this.mockStore.roles[0];
+  }
+
+  async listUserRoles(): Promise<AdminUserRoleItem[]> {
+    if (this.shouldUseMock()) {
+      return this.mockStore.userRoles;
+    }
+
+    try {
+      const res = await this.client.get<CoreApiResponse<{ items: unknown[] } | unknown[]>>('/v1/admin/user-roles');
+      const data = res.data ?? res;
+      const rawList = Array.isArray(data) ? data : ((data as { items?: unknown[] })?.items ?? []);
+      return rawList.map((r) => AdminUserRoleItemSchema.parse(r));
+    } catch (err) {
+      logger.warn('Core API listUserRoles failed; using mock', { err: String(err) });
+      return this.mockStore.userRoles;
+    }
+  }
+
+  async createUserRole(data: AdminCreateUserRoleRequest): Promise<AdminUserRoleItem> {
+    const validated = AdminCreateUserRoleRequestSchema.parse(data);
+    const newRole: AdminUserRoleItem = {
+      id: crypto.randomUUID(),
+      name: validated.name,
+      code: validated.code,
+      description: validated.description || '',
+      permissions: validated.permissions || [],
+      daily_quota: validated.daily_quota,
+      is_default: validated.is_default || false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    if (newRole.is_default) {
+      this.mockStore.userRoles.forEach((r) => { r.is_default = false; });
+    }
+    this.mockStore.userRoles.push(newRole);
+
+    if (!this.shouldUseMock()) {
+      try {
+        const res = await this.client.post<CoreApiResponse<unknown>>('/v1/admin/user-roles', {
+          name: validated.name,
+          code: validated.code,
+          description: validated.description,
+          permissions: validated.permissions,
+          daily_quota: validated.daily_quota,
+          is_default: validated.is_default,
+        });
+        const payload = res.data ?? res;
+        return AdminUserRoleItemSchema.parse(payload);
+      } catch (err) {
+        logger.warn('Core API createUserRole failed; using mock', { err: String(err) });
+      }
+    }
+
+    return newRole;
+  }
+
+  async updateUserRole(id: string, data: AdminUpdateUserRoleRequest): Promise<AdminUserRoleItem> {
+    const validated = AdminUpdateUserRoleRequestSchema.parse(data);
+    const role = this.mockStore.userRoles.find((r) => r.id === id);
+    if (role) {
+      if (validated.name) role.name = validated.name;
+      if (validated.description !== undefined) role.description = validated.description;
+      if (validated.permissions) role.permissions = validated.permissions;
+      if (validated.daily_quota !== undefined) role.daily_quota = validated.daily_quota;
+      if (validated.is_default !== undefined) {
+        if (validated.is_default) {
+          this.mockStore.userRoles.forEach((r) => {
+            if (r.id !== id) r.is_default = false;
+          });
+        }
+        role.is_default = validated.is_default;
+      }
+      role.updated_at = new Date().toISOString();
+    }
+
+    if (!this.shouldUseMock()) {
+      try {
+        const res = await this.client.put<CoreApiResponse<unknown>>(`/v1/admin/user-roles/${id}`, {
+          name: validated.name ?? role?.name,
+          description: validated.description ?? role?.description,
+          permissions: validated.permissions ?? role?.permissions,
+          daily_quota: validated.daily_quota ?? role?.daily_quota,
+          is_default: validated.is_default ?? role?.is_default,
+        });
+        const payload = res.data ?? res;
+        return AdminUserRoleItemSchema.parse(payload);
+      } catch (err) {
+        logger.warn('Core API updateUserRole failed; using mock', { err: String(err) });
+      }
+    }
+
+    return role || this.mockStore.userRoles[0];
+  }
+
+  async assignUserRole(userId: string, data: AdminAssignUserRoleRequest): Promise<AdminUserItem> {
+    const validated = AdminAssignUserRoleRequestSchema.parse(data);
+    const user = this.mockStore.users.find((u) => u.id === userId);
+    const role = this.mockStore.userRoles.find((r) => r.id === validated.role_id);
+    if (user && role) {
+      user.role_id = role.id;
+      user.role_code = role.code;
+      user.role_name = role.name;
+      user.daily_quota = role.daily_quota;
+      user.daily_quota_minutes = role.daily_quota;
+      user.updated_at = new Date().toISOString();
+    }
+
+    if (!this.shouldUseMock()) {
+      try {
+        const res = await this.client.patch<CoreApiResponse<unknown>>(`/v1/admin/users/${userId}/role`, {
+          role_id: validated.role_id,
+        });
+        const payload = res.data ?? res;
+        return AdminUserItemSchema.parse(payload);
+      } catch (err) {
+        logger.warn('Core API assignUserRole failed; using mock', { err: String(err) });
+      }
+    }
+
+    return user || this.mockStore.users[0];
   }
 
   async listTemplates(): Promise<AdminTemplateItem[]> {

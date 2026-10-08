@@ -39,6 +39,10 @@ describe('AdminController', () => {
     listRoles: vi.fn().mockResolvedValue([]),
     createRole: vi.fn().mockResolvedValue({ id: 'role-1', name: 'Role 1', description: '', permissions: [] }),
     updateRole: vi.fn().mockResolvedValue({ id: 'role-1', name: 'Role 1', description: '', permissions: [] }),
+    listUserRoles: vi.fn().mockResolvedValue([{ id: 'ur-1', code: 'pro', name: 'Pro', description: '', is_default: false, permissions: [] }]),
+    createUserRole: vi.fn().mockResolvedValue({ id: 'ur-1', code: 'pro', name: 'Pro', description: '', is_default: false, permissions: [] }),
+    updateUserRole: vi.fn().mockResolvedValue({ id: 'ur-1', code: 'pro', name: 'Pro', description: '', is_default: false, permissions: [] }),
+    assignUserRole: vi.fn().mockResolvedValue({ id: 'user-1', email: 'u@example.com', name: 'U', status: 'ACTIVE', daily_quota_minutes: 60, role_id: 'ur-1', role_code: 'pro', role_name: 'Pro' }),
     listTemplates: vi.fn().mockResolvedValue([]),
     createTemplate: vi.fn().mockResolvedValue({ id: 'tpl-1', category_key: 'CAT', display_name: 'Cat', system_prompt: '', schema_definition: {}, version: 1, is_default: false }),
     updateTemplate: vi.fn().mockResolvedValue({ id: 'tpl-1', category_key: 'CAT', display_name: 'Cat', system_prompt: '', schema_definition: {}, version: 2, is_default: false }),
@@ -135,5 +139,49 @@ describe('AdminController', () => {
     expect(body.data.length).toBe(1);
     expect(body.pagination.total).toBe(1);
     expect(body.pagination.totalPages).toBe(1);
+  });
+
+  it('handles user roles controller endpoints', async () => {
+    // listUserRoles
+    const listRes = await controller.listUserRoles();
+    expect(listRes.status).toBe(200);
+    const listBody = await listRes.json();
+    expect(listBody.data.length).toBe(1);
+
+    // createUserRole
+    const createReq = new Request('http://localhost:3000/api/admin/user-roles', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: 'pro',
+        name: 'Pro',
+        permissions: ['recordings:create'],
+      }),
+    });
+    const createRes = await controller.createUserRole(createReq);
+    expect(createRes.status).toBe(201);
+
+    // updateUserRole
+    const updateReq = new Request('http://localhost:3000/api/admin/user-roles/ur-1', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'Pro Updated',
+        permissions: ['recordings:create'],
+      }),
+    });
+    const updateRes = await controller.updateUserRole(updateReq, 'ur-1');
+    expect(updateRes.status).toBe(200);
+
+    // assignUserRole
+    const assignReq = new Request('http://localhost:3000/api/admin/users/user-1/role', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        role_id: '20000000-0000-4000-8000-000000000021',
+      }),
+    });
+    const assignRes = await controller.assignUserRole(assignReq, 'user-1');
+    expect(assignRes.status).toBe(200);
   });
 });

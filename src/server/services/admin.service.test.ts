@@ -28,6 +28,10 @@ describe('AdminService', () => {
     listRoles: vi.fn().mockResolvedValue([]),
     createRole: vi.fn().mockResolvedValue({ id: 'role-1', name: 'Role 1', description: '', permissions: [] }),
     updateRole: vi.fn().mockResolvedValue({ id: 'role-1', name: 'Role 1', description: '', permissions: [] }),
+    listUserRoles: vi.fn().mockResolvedValue([]),
+    createUserRole: vi.fn().mockResolvedValue({ id: 'ur-1', code: 'pro', name: 'Pro', description: '', is_default: false, permissions: [] }),
+    updateUserRole: vi.fn().mockResolvedValue({ id: 'ur-1', code: 'pro', name: 'Pro Updated', description: '', is_default: false, permissions: [] }),
+    assignUserRole: vi.fn().mockResolvedValue({ id: 'user-1', email: 'u@example.com', name: 'U', status: 'ACTIVE', daily_quota_minutes: 60, role_id: 'ur-1', role_code: 'pro', role_name: 'Pro' }),
     listTemplates: vi.fn().mockResolvedValue([]),
     createTemplate: vi.fn().mockResolvedValue({ id: 'tpl-1', category_key: 'CAT', display_name: 'Cat', system_prompt: '', schema_definition: {}, version: 1, is_default: false }),
     updateTemplate: vi.fn().mockResolvedValue({ id: 'tpl-1', category_key: 'CAT', display_name: 'Cat', system_prompt: '', schema_definition: {}, version: 2, is_default: false }),
@@ -72,5 +76,31 @@ describe('AdminService', () => {
   it('delegates getJobs to repository', async () => {
     await service.getJobs({ page: 1, limit: 10, status: 'COMPLETED' });
     expect(mockRepo.getJobs).toHaveBeenCalledWith({ page: 1, limit: 10, status: 'COMPLETED' });
+  });
+
+  it('delegates user roles operations to repository', async () => {
+    await service.listUserRoles();
+    expect(mockRepo.listUserRoles).toHaveBeenCalled();
+
+    await service.createUserRole({
+      code: 'pro',
+      name: 'Pro',
+      description: 'Pro tier',
+      is_default: false,
+      permissions: ['recordings:create'],
+    });
+    expect(mockRepo.createUserRole).toHaveBeenCalled();
+
+    await service.updateUserRole('ur-1', {
+      name: 'Pro Updated',
+      permissions: ['recordings:create'],
+    });
+    expect(mockRepo.updateUserRole).toHaveBeenCalledWith('ur-1', {
+      name: 'Pro Updated',
+      permissions: ['recordings:create'],
+    });
+
+    await service.assignUserRole('user-1', { role_id: 'ur-1' });
+    expect(mockRepo.assignUserRole).toHaveBeenCalledWith('user-1', { role_id: 'ur-1' });
   });
 });
