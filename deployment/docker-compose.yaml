@@ -2,6 +2,8 @@ services:
   web:
     image: code-base-nextjs:latest
     container_name: code-base-nextjs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     env_file:
       - ../.env
     ports:
