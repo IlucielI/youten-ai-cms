@@ -69,4 +69,24 @@ describe('JobsManager', () => {
     fireEvent.click(closeBtn);
     expect(screen.queryByText('Pipeline Job Details')).toBeNull();
   });
+
+  it('correctly normalizes near-minute durations like 59.6s to 1m 0s', () => {
+    const edgeJob: AdminJobItem = {
+      id: 'd1000000-0000-0000-0000-000000000099',
+      title: 'Near Minute Boundary Audio',
+      original_filename: 'boundary.mp3',
+      file_size_bytes: 1000000,
+      duration_seconds: 59.6,
+      source_type: 'UPLOAD',
+      status: 'COMPLETED',
+      selected_template: 'GENERAL',
+      output_language: 'id',
+      is_guest: false,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    render(<JobsManager initialJobs={[edgeJob]} initialTotal={1} />);
+    expect(screen.getByText('1m 0s')).toBeDefined();
+  });
 });

@@ -59,8 +59,9 @@ export function JobsManager({ initialJobs, initialTotal }: JobsManagerProps) {
 
   const formatDuration = (seconds: number) => {
     if (!seconds || seconds <= 0) return '0s';
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.round(seconds % 60);
+    const totalSeconds = Math.round(seconds);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
     if (mins === 0) return `${secs}s`;
     return `${mins}m ${secs}s`;
   };
