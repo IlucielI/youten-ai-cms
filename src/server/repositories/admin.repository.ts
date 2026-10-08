@@ -43,6 +43,7 @@ import {
   AdminJobListResponseSchema,
   AdminJobQuery,
 } from '../schemas/admin.schema';
+import { AUTH_COOKIES } from '../constants/auth.constant';
 import { IHttpClient, HttpClient } from '../datasources/http';
 import { env } from '../config/env';
 import { logger } from '../logger/pino.logger';
@@ -381,7 +382,19 @@ export class AdminRepository implements IAdminRepository {
         baseUrl: env.CORE_API_URL || 'http://localhost:8080',
         defaultHeaders: {
           'Content-Type': 'application/json',
-          ...(env.CORE_API_ADMIN_TOKEN ? { Authorization: `Bearer ${env.CORE_API_ADMIN_TOKEN}` } : {}),
+        },
+        authHeaderResolver: async () => {
+          try {
+            const { cookies } = await import('next/headers');
+            const cookieStore = await cookies();
+            const sessionToken = cookieStore.get(AUTH_COOKIES.SESSION_TOKEN)?.value;
+            if (sessionToken) {
+              return `Bearer ${sessionToken}`;
+            }
+          } catch {
+            // Outside Next.js request context (e.g. tests or background scripts)
+          }
+          return env.CORE_API_ADMIN_TOKEN ? `Bearer ${env.CORE_API_ADMIN_TOKEN}` : null;
         },
       });
   }
