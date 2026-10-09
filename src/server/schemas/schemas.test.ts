@@ -182,4 +182,49 @@ describe('Zod Schemas & Validation Helpers', () => {
       expect(meta.hasPrevPage).toBe(true);
     });
   });
+
+  describe('AdminJobItemSchema & Meeting Bot Support', () => {
+    it('should validate job with MEETING_BOT source_type, bot_provider, and analytics_data', async () => {
+      const { AdminJobItemSchema, AdminJobQuerySchema } = await import('./admin.schema');
+
+      const meetingBotJob = {
+        id: 'd1000000-0000-4000-8000-000000000006',
+        title: 'Board Sync (Google Meet)',
+        original_filename: 'gmeet_rec.webm',
+        file_size_bytes: 15400000,
+        duration_seconds: 1800,
+        source_type: 'MEETING_BOT',
+        bot_provider: 'google_meet',
+        status: 'COMPLETED',
+        selected_template: 'MOM',
+        output_language: 'id',
+        is_guest: false,
+        analytics_data: {
+          session_id: 'bot-sess-123',
+          meeting_url: 'https://meet.google.com/abc-defg-hij',
+        },
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      const result = AdminJobItemSchema.safeParse(meetingBotJob);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.source_type).toBe('MEETING_BOT');
+        expect(result.data.bot_provider).toBe('google_meet');
+        expect(result.data.analytics_data?.session_id).toBe('bot-sess-123');
+      }
+
+      const queryResult = AdminJobQuerySchema.safeParse({
+        source_type: 'MEETING_BOT',
+        bot_provider: 'google_meet',
+        page: '1',
+      });
+      expect(queryResult.success).toBe(true);
+      if (queryResult.success) {
+        expect(queryResult.data.source_type).toBe('MEETING_BOT');
+        expect(queryResult.data.bot_provider).toBe('google_meet');
+      }
+    });
+  });
 });

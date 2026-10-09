@@ -15,17 +15,19 @@ export function JobsManager({ initialJobs, initialTotal }: JobsManagerProps) {
   const [total, setTotal] = useState<number>(initialTotal);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
+  const [sourceFilter, setSourceFilter] = useState('ALL');
   const [loading, setLoading] = useState(false);
   const [inspectJob, setInspectJob] = useState<AdminJobItem | null>(null);
   const fetchRequestIdRef = useRef(0);
 
-  const fetchJobs = async (searchVal: string, statusVal: string) => {
+  const fetchJobs = async (searchVal: string, statusVal: string, sourceVal: string) => {
     setLoading(true);
     const currentReq = ++fetchRequestIdRef.current;
     try {
       const q = new URLSearchParams();
       if (searchVal.trim()) q.set('search', searchVal.trim());
       if (statusVal !== 'ALL') q.set('status', statusVal);
+      if (sourceVal !== 'ALL') q.set('source_type', sourceVal);
 
       const endpoint = `/api/admin/jobs${q.toString() ? `?${q.toString()}` : ''}`;
       const data = await apiFetchData<AdminJobItem[]>(endpoint);
@@ -45,16 +47,21 @@ export function JobsManager({ initialJobs, initialTotal }: JobsManagerProps) {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchJobs(search, statusFilter);
+    fetchJobs(search, statusFilter, sourceFilter);
   };
 
   const handleStatusFilterChange = (newStatus: string) => {
     setStatusFilter(newStatus);
-    fetchJobs(search, newStatus);
+    fetchJobs(search, newStatus, sourceFilter);
+  };
+
+  const handleSourceFilterChange = (newSource: string) => {
+    setSourceFilter(newSource);
+    fetchJobs(search, statusFilter, newSource);
   };
 
   const handleRefresh = () => {
-    fetchJobs(search, statusFilter);
+    fetchJobs(search, statusFilter, sourceFilter);
   };
 
   const formatDuration = (seconds: number) => {
@@ -113,11 +120,55 @@ export function JobsManager({ initialJobs, initialTotal }: JobsManagerProps) {
     }
   };
 
+  const getSourceBadge = (sourceType?: string, botProvider?: string | null) => {
+    if (sourceType?.toUpperCase() === 'MEETING_BOT') {
+      const providerLabel = botProvider
+        ? botProvider === 'google_meet'
+          ? 'Google Meet'
+          : botProvider === 'zoom'
+          ? 'Zoom'
+          : botProvider === 'ms_teams'
+          ? 'MS Teams'
+          : botProvider === 'discord'
+          ? 'Discord'
+          : botProvider
+        : 'Bot';
+      return (
+        <span
+          data-testid="badge-source-bot"
+          className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200"
+        >
+          🤖 {providerLabel}
+        </span>
+      );
+    }
+    if (sourceType?.toUpperCase() === 'LINK') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-200">
+          🔗 URL
+        </span>
+      );
+    }
+    if (sourceType?.toUpperCase() === 'LIVE_RECORDING') {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+          🎙️ Live
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+        📁 Upload
+      </span>
+    );
+  };
+
   // Metrics summary
   const completedCount = jobs.filter((j) => j.status.toUpperCase() === 'COMPLETED').length;
   const processingCount = jobs.filter((j) => j.status.toUpperCase() === 'PROCESSING').length;
   const queuedCount = jobs.filter((j) => j.status.toUpperCase() === 'QUEUED').length;
   const failedCount = jobs.filter((j) => j.status.toUpperCase() === 'FAILED').length;
+  const botJobsCount = jobs.filter((j) => j.source_type?.toUpperCase() === 'MEETING_BOT').length;
 
   return (
     <div className="space-y-6">
@@ -138,7 +189,7 @@ export function JobsManager({ initialJobs, initialTotal }: JobsManagerProps) {
             {loading ? '↻ Refreshing...' : '↻ Refresh'}
           </button>
           <span className="px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 border border-slate-200">
-            Total Jobs: {total}
+            Total Jobs: {total} • 🤖 {botJobsCount} Bots
           </span>
         </div>
       </div>
@@ -164,35 +215,62 @@ export function JobsManager({ initialJobs, initialTotal }: JobsManagerProps) {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-        <form onSubmit={handleSearchSubmit} className="flex-1 flex gap-2">
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search by title, filename, or user email..."
-            className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
-          >
-            Search
-          </button>
-        </form>
-
-        <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
-          {['ALL', 'COMPLETED', 'PROCESSING', 'QUEUED', 'FAILED'].map((st) => (
+      <div className="p-4 bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+          <form onSubmit={handleSearchSubmit} className="flex-1 flex gap-2">
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title, filename, bot provider, or user email..."
+              className="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            />
             <button
-              key={st}
-              onClick={() => handleStatusFilterChange(st)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 ${
-                statusFilter === st
-                  ? 'bg-slate-900 text-white shadow-sm'
+              type="submit"
+              className="px-4 py-2 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm"
+            >
+              Search
+            </button>
+          </form>
+
+          <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
+            {['ALL', 'COMPLETED', 'PROCESSING', 'QUEUED', 'FAILED'].map((st) => (
+              <button
+                key={st}
+                onClick={() => handleStatusFilterChange(st)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shrink-0 ${
+                  statusFilter === st
+                    ? 'bg-slate-900 text-white shadow-sm'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
+                }`}
+              >
+                {st}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Source Filter Row */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pt-2 border-t border-slate-100 text-xs">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">Source:</span>
+          {[
+            { key: 'ALL', label: 'All Sources' },
+            { key: 'MEETING_BOT', label: '🤖 Meeting Bots' },
+            { key: 'UPLOAD', label: '📁 Uploads' },
+            { key: 'LINK', label: '🔗 URLs' },
+            { key: 'LIVE_RECORDING', label: '🎙️ Live Audio' },
+          ].map(({ key, label }) => (
+            <button
+              key={key}
+              data-testid={`filter-source-${key.toLowerCase()}`}
+              onClick={() => handleSourceFilterChange(key)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-colors shrink-0 ${
+                sourceFilter === key
+                  ? 'bg-indigo-600 text-white shadow-sm'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'
               }`}
             >
-              {st}
+              {label}
             </button>
           ))}
         </div>
@@ -224,8 +302,11 @@ export function JobsManager({ initialJobs, initialTotal }: JobsManagerProps) {
                 jobs.map((job) => (
                   <tr key={job.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="py-3 px-4">
-                      <div className="font-semibold text-slate-900 truncate max-w-xs">{job.title}</div>
-                      <div className="text-[11px] text-slate-400 truncate max-w-xs font-mono">
+                      <div className="flex items-center gap-2">
+                        <div className="font-semibold text-slate-900 truncate max-w-xs">{job.title}</div>
+                        {getSourceBadge(job.source_type, job.bot_provider)}
+                      </div>
+                      <div className="text-[11px] text-slate-400 truncate max-w-xs font-mono mt-0.5">
                         {job.original_filename}
                       </div>
                     </td>
@@ -309,6 +390,46 @@ export function JobsManager({ initialJobs, initialTotal }: JobsManagerProps) {
                   <p className="text-rose-700 font-mono text-[11px]">
                     {inspectJob.error_message || 'Unknown pipeline execution failure.'}
                   </p>
+                </div>
+              )}
+
+              {inspectJob.source_type === 'MEETING_BOT' && (
+                <div
+                  data-testid="inspect-meeting-bot-telemetry"
+                  className="p-3.5 bg-indigo-50/70 border border-indigo-200/80 rounded-xl space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-indigo-950 text-xs flex items-center gap-1.5">
+                      🤖 Meeting Voice Bot Telemetry
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-indigo-200/60 text-indigo-900 uppercase">
+                      {inspectJob.bot_provider || 'Generic Bot'}
+                    </span>
+                  </div>
+                  {inspectJob.analytics_data && typeof inspectJob.analytics_data === 'object' && (
+                    <div className="text-[11px] text-indigo-900 space-y-1 font-mono">
+                      {'meeting_url' in inspectJob.analytics_data && Boolean(inspectJob.analytics_data.meeting_url) && (
+                        <div className="truncate">
+                          <span className="text-indigo-600 font-sans font-semibold">Meeting URL: </span>
+                          <span>{String(inspectJob.analytics_data.meeting_url)}</span>
+                        </div>
+                      )}
+                      {'session_id' in inspectJob.analytics_data && Boolean(inspectJob.analytics_data.session_id) && (
+                        <div className="truncate">
+                          <span className="text-indigo-600 font-sans font-semibold">Session ID: </span>
+                          <span>{String(inspectJob.analytics_data.session_id)}</span>
+                        </div>
+                      )}
+                      {'guild_id' in inspectJob.analytics_data && Boolean(inspectJob.analytics_data.guild_id) && (
+                        <div>
+                          <span className="text-indigo-600 font-sans font-semibold">Guild / Channel: </span>
+                          <span>
+                            {String(inspectJob.analytics_data.guild_id)} / {String(inspectJob.analytics_data.channel_id || '—')}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
 
