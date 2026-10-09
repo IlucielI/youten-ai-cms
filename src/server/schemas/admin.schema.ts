@@ -702,6 +702,7 @@ export const AdminJobItemSchema = z.object({
   file_size_bytes: z.number().int().default(0),
   duration_seconds: z.number().default(0),
   source_type: z.string().default('UPLOAD'),
+  bot_provider: z.string().nullable().optional(),
   status: z.string(),
   selected_template: z.string().default('GENERAL'),
   detected_language: z.string().nullable().optional(),
@@ -711,6 +712,7 @@ export const AdminJobItemSchema = z.object({
   is_guest: z.boolean().default(false),
   user_name: z.string().nullable().optional(),
   user_email: z.string().nullable().optional(),
+  analytics_data: z.record(z.string(), z.unknown()).nullable().optional(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -727,6 +729,8 @@ export type AdminJobListResponse = z.infer<typeof AdminJobListResponseSchema>;
 
 export const AdminJobQuerySchema = PaginationQuerySchema.extend({
   status: z.string().optional(),
+  source_type: z.string().optional(),
+  bot_provider: z.string().optional(),
   search: z.string().optional(),
 });
 export type AdminJobQuery = Partial<z.infer<typeof AdminJobQuerySchema>>;

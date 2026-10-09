@@ -14,5 +14,7 @@ describe('AdminOverviewPage', () => {
     expect(screen.getByText('Storage Volume')).toBeDefined();
     expect(screen.getByText('Pipeline Quality')).toBeDefined();
     expect(screen.getByText(/AI Operations & Cloud Burn Rate Oversight/)).toBeDefined();
+    expect(screen.getByText('Meeting Voice Bot')).toBeDefined();
+    expect(screen.getByText('Meet • Zoom • Teams • Discord')).toBeDefined();
   });
 });

@@ -401,6 +401,52 @@ class AdminMockStore {
       created_at: new Date(Date.now() - 86400000 * 3).toISOString(),
       updated_at: new Date(Date.now() - 86400000 * 3 + 300000).toISOString(),
     },
+    {
+      id: 'd1000000-0000-0000-0000-000000000006',
+      title: 'Design Review & Architecture Alignment (Google Meet)',
+      original_filename: 'gmeet_bot_session_rec.webm',
+      file_size_bytes: 35120000,
+      duration_seconds: 2140,
+      source_type: 'MEETING_BOT',
+      bot_provider: 'google_meet',
+      status: 'COMPLETED',
+      selected_template: 'MOM',
+      detected_language: 'id',
+      output_language: 'id',
+      is_guest: false,
+      user_name: 'Sarah Chen',
+      user_email: 'sarah.chen@techflow.io',
+      analytics_data: {
+        session_id: 'bot-sess-gm-901',
+        meeting_url: 'https://meet.google.com/abc-defg-hij',
+        provider: 'google_meet',
+      },
+      created_at: new Date(Date.now() - 3600000 * 4).toISOString(),
+      updated_at: new Date(Date.now() - 3600000 * 3).toISOString(),
+    },
+    {
+      id: 'd1000000-0000-0000-0000-000000000007',
+      title: 'Townhall & Product Pitch (Zoom)',
+      original_filename: 'zoom_meeting_bot.webm',
+      file_size_bytes: 42000000,
+      duration_seconds: 2700,
+      source_type: 'MEETING_BOT',
+      bot_provider: 'zoom',
+      status: 'PROCESSING',
+      selected_template: 'GENERAL',
+      detected_language: 'en',
+      output_language: 'id',
+      is_guest: true,
+      user_name: 'Guest Organizer',
+      user_email: null,
+      analytics_data: {
+        session_id: 'bot-sess-zm-902',
+        meeting_url: 'https://zoom.us/j/1234567890',
+        provider: 'zoom',
+      },
+      created_at: new Date(Date.now() - 1200000).toISOString(),
+      updated_at: new Date(Date.now() - 600000).toISOString(),
+    },
   ];
 }
 
@@ -1089,12 +1135,20 @@ export class AdminRepository implements IAdminRepository {
       if (query?.status && query.status !== 'ALL') {
         filtered = filtered.filter((j) => j.status.toUpperCase() === query.status!.toUpperCase());
       }
+      if (query?.source_type && query.source_type !== 'ALL') {
+        filtered = filtered.filter((j) => j.source_type?.toUpperCase() === query.source_type!.toUpperCase());
+      }
+      if (query?.bot_provider && query.bot_provider !== 'ALL') {
+        filtered = filtered.filter((j) => j.bot_provider?.toLowerCase() === query.bot_provider!.toLowerCase());
+      }
       if (query?.search) {
         const s = query.search.toLowerCase();
         filtered = filtered.filter(
           (j) =>
             j.title.toLowerCase().includes(s) ||
             j.original_filename.toLowerCase().includes(s) ||
+            (j.bot_provider && j.bot_provider.toLowerCase().includes(s)) ||
+            (j.source_type && j.source_type.toLowerCase().includes(s)) ||
             (j.user_email && j.user_email.toLowerCase().includes(s))
         );
       }
@@ -1119,6 +1173,8 @@ export class AdminRepository implements IAdminRepository {
           page: query?.page ?? 1,
           limit: query?.limit ?? 20,
           status: query?.status && query.status !== 'ALL' ? query.status : undefined,
+          source_type: query?.source_type && query.source_type !== 'ALL' ? query.source_type : undefined,
+          bot_provider: query?.bot_provider && query.bot_provider !== 'ALL' ? query.bot_provider : undefined,
           search: query?.search || undefined,
         },
       });

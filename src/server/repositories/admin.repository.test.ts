@@ -139,6 +139,14 @@ describe('AdminRepository', () => {
     const searched = await repo.getJobs({ search: 'Strategic' });
     expect(searched.items.length).toBeGreaterThan(0);
     expect(searched.items[0].title).toContain('Strategic');
+
+    const meetingBots = await repo.getJobs({ source_type: 'MEETING_BOT' });
+    expect(meetingBots.items.length).toBeGreaterThan(0);
+    expect(meetingBots.items.every((j) => j.source_type === 'MEETING_BOT')).toBe(true);
+
+    const gmeetBots = await repo.getJobs({ bot_provider: 'google_meet' });
+    expect(gmeetBots.items.length).toBeGreaterThan(0);
+    expect(gmeetBots.items.every((j) => j.bot_provider === 'google_meet')).toBe(true);
   });
 
   it('manages customer user roles: list, create, update, and assign to user', async () => {

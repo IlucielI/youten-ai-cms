@@ -41,21 +41,45 @@ describe('JobsManager', () => {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     },
+    {
+      id: 'd1000000-0000-0000-0000-000000000006',
+      title: 'Sprint Planning (Google Meet)',
+      original_filename: 'gmeet_rec.webm',
+      file_size_bytes: 25000000,
+      duration_seconds: 1800,
+      source_type: 'MEETING_BOT',
+      bot_provider: 'google_meet',
+      status: 'COMPLETED',
+      selected_template: 'MOM',
+      detected_language: 'id',
+      output_language: 'id',
+      is_guest: false,
+      user_name: 'Sarah Chen',
+      user_email: 'sarah.chen@techflow.io',
+      analytics_data: {
+        session_id: 'bot-sess-999',
+        meeting_url: 'https://meet.google.com/xyz-uvwx-rst',
+      },
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
   ];
 
   it('renders JobsManager with metric summaries and jobs table', () => {
-    render(<JobsManager initialJobs={mockJobs} initialTotal={2} />);
+    render(<JobsManager initialJobs={mockJobs} initialTotal={3} />);
 
     expect(screen.getByText('AI Pipeline & Generations Console')).toBeDefined();
-    expect(screen.getByText('Total Jobs: 2')).toBeDefined();
+    expect(screen.getByText(/Total Jobs: 3/)).toBeDefined();
     expect(screen.getByText('Annual Strategic Planning Meeting')).toBeDefined();
     expect(screen.getByText('Corrupted Audio Stream Recording')).toBeDefined();
+    expect(screen.getByText('Sprint Planning (Google Meet)')).toBeDefined();
+    expect(screen.getByText('🤖 Google Meet')).toBeDefined();
     expect(screen.getAllByText('COMPLETED').length).toBeGreaterThan(0);
     expect(screen.getAllByText('FAILED').length).toBeGreaterThan(0);
   });
 
-  it('opens inspector modal when clicking Inspect button', () => {
-    render(<JobsManager initialJobs={mockJobs} initialTotal={2} />);
+  it('opens inspector modal when clicking Inspect button on standard job', () => {
+    render(<JobsManager initialJobs={mockJobs} initialTotal={3} />);
 
     const inspectButtons = screen.getAllByText('Inspect');
     fireEvent.click(inspectButtons[0]);
@@ -68,6 +92,19 @@ describe('JobsManager', () => {
     const closeBtn = screen.getByText('Close');
     fireEvent.click(closeBtn);
     expect(screen.queryByText('Pipeline Job Details')).toBeNull();
+  });
+
+  it('inspects meeting bot job and renders dedicated bot telemetry', () => {
+    render(<JobsManager initialJobs={mockJobs} initialTotal={3} />);
+
+    const inspectButtons = screen.getAllByText('Inspect');
+    // Third job is the meeting bot job
+    fireEvent.click(inspectButtons[2]);
+
+    expect(screen.getByText('Pipeline Job Details')).toBeDefined();
+    expect(screen.getByTestId('inspect-meeting-bot-telemetry')).toBeDefined();
+    expect(screen.getByText('https://meet.google.com/xyz-uvwx-rst')).toBeDefined();
+    expect(screen.getByText('bot-sess-999')).toBeDefined();
   });
 
   it('correctly normalizes near-minute durations like 59.6s to 1m 0s', () => {

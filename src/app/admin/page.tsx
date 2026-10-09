@@ -236,7 +236,7 @@ export default async function AdminOverviewPage() {
           Real-time ping verification of all backing infrastructure micro-services.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-sm">
@@ -290,6 +290,21 @@ export default async function AdminOverviewPage() {
               <div>
                 <p className="text-xs font-bold text-slate-900">MinIO / S3 Store</p>
                 <p className="text-[11px] text-slate-500">Bucket: youten-audio</p>
+              </div>
+            </div>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+              READY
+            </span>
+          </div>
+
+          <div className="p-4 rounded-xl border border-slate-200 bg-white flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center font-bold text-sm">
+                BOT
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-900">Meeting Voice Bot</p>
+                <p className="text-[11px] text-slate-500">Meet • Zoom • Teams • Discord</p>
               </div>
             </div>
             <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
