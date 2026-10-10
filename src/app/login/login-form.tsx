@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { YoutenLogo } from '@/components/atoms/youten-logo';
 import {
   Lock,
   User,
@@ -87,9 +88,7 @@ export function LoginForm() {
         <div className="relative rounded-2xl bg-slate-900/90 backdrop-blur-2xl border border-slate-800/80 p-8 shadow-2xl">
           {/* Brand Header */}
           <div className="flex flex-col items-center text-center mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center font-extrabold text-xl text-white shadow-lg shadow-blue-500/25 mb-4 ring-1 ring-white/20">
-              YT
-            </div>
+            <YoutenLogo size="lg" className="mb-4 shadow-lg shadow-blue-500/25 ring-1 ring-white/10 rounded-2xl" />
             <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
               Youten AI Console
             </h1>
