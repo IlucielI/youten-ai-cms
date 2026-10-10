@@ -10,9 +10,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'NextBase | Enterprise-Grade Next.js Boilerplate',
+  title: 'Youten AI CMS | Enterprise Operations & Moderation Console',
   description:
-    'Clean Architecture on the Server layer and Atomic Design on the Frontend UI. Next.js 16, React 19, Tailwind CSS v4, and Vitest ready.',
+    'Portal manajemen operasional, moderasi konten, audit log, dan administrasi sistem Youten AI.',
   icons: {
     icon: '/icon.svg',
   },
