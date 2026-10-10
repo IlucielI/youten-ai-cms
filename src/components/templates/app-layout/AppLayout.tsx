@@ -23,7 +23,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
               <span className="font-bold text-slate-900">Youten AI CMS</span>
-              <span>• Operational &amp; Moderation Platform</span>
+              <span>• Operations &amp; Moderation Platform</span>
             </div>
             <p className="text-slate-400">
               © {new Date().getFullYear()} Youten AI. All rights reserved.
