@@ -27,6 +27,7 @@
   /* Borders & Dividers */
   --border: #e2e8f0;
   --border-subtle: #f1f5f9;
+  --input: #cbd5e1;
 
   /* Muted Text */
   --muted: #64748b;
@@ -100,6 +101,7 @@
     --surface-subtle: #1a2236;
     --border: #232f48;
     --border-subtle: #1e293b;
+    --input: #334155;
     --muted: #94a3b8;
     --muted-foreground: #64748b;
     --destructive: #f87171;
@@ -133,6 +135,7 @@
 
   --color-border: var(--border);
   --color-border-subtle: var(--border-subtle);
+  --color-input: var(--input);
 
   --color-muted: var(--muted);
   --color-muted-foreground: var(--muted-foreground);
