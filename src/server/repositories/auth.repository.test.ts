@@ -50,6 +50,22 @@ describe('AuthRepository', () => {
       expect(token1).toBe('mock-jwt-anon-token-xyz');
       expect(token2).toBe(token1);
     });
+
+    it('rotates admin token with valid refresh token in mock mode', async () => {
+      const repo = new AuthRepository(mockHttpClient);
+      const res = await repo.refreshToken({ refresh_token: 'valid-refresh-token' });
+
+      expect(res.token).toBe('mock-jwt-admin-token-refreshed');
+      expect(res.refresh_token).toBe('mock-jwt-admin-refresh-token-rotated');
+      expect(res.admin.username).toBe('admin');
+    });
+
+    it('throws UnauthorizedError when invalid refresh token provided in mock mode', async () => {
+      const repo = new AuthRepository(mockHttpClient);
+      await expect(
+        repo.refreshToken({ refresh_token: 'invalid-token' })
+      ).rejects.toThrow(UnauthorizedError);
+    });
   });
 
   describe('Core API HTTP Mode', () => {

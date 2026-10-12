@@ -29,11 +29,39 @@ export type AdminInfo = z.infer<typeof AdminInfoSchema>;
  */
 export const AdminLoginResponseSchema = z.object({
   token: z.string(),
+  refresh_token: z.string().optional().default(''),
+  token_type: z.string().optional().default('Bearer'),
+  expires_in: z.number().optional(),
+  refresh_expires_in: z.number().optional(),
   expires_at: z.string().optional(),
   admin: AdminInfoSchema,
 });
 
 export type AdminLoginResponse = z.infer<typeof AdminLoginResponseSchema>;
+
+/**
+ * Admin Refresh Token Request Schema.
+ */
+export const AdminRefreshTokenRequestSchema = z.object({
+  refresh_token: z.string().min(1, 'Refresh token is required'),
+});
+
+export type AdminRefreshTokenRequest = z.infer<typeof AdminRefreshTokenRequestSchema>;
+
+/**
+ * Admin Refresh Token Response Schema from Core API.
+ */
+export const AdminRefreshTokenResponseSchema = z.object({
+  token: z.string(),
+  refresh_token: z.string(),
+  token_type: z.string().optional().default('Bearer'),
+  expires_in: z.number().optional(),
+  refresh_expires_in: z.number().optional(),
+  expires_at: z.string().optional(),
+  admin: AdminInfoSchema,
+});
+
+export type AdminRefreshTokenResponse = z.infer<typeof AdminRefreshTokenResponseSchema>;
 
 /**
  * Anonymous / Client Gateway Token Response Schema from Core API.
