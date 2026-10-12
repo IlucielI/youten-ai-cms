@@ -4,6 +4,9 @@ import {
   AdminLoginRequest,
   AdminLoginResponse,
   AdminLoginResponseSchema,
+  AdminRefreshTokenRequest,
+  AdminRefreshTokenResponse,
+  AdminRefreshTokenResponseSchema,
   AnonTokenResponse,
   AnonTokenResponseSchema,
 } from '../schemas/auth.schema';
@@ -101,6 +104,10 @@ export class AuthRepository implements IAuthRepository {
       if (request.username === 'admin' && request.password === 'Admin123!') {
         return {
           token: 'mock-jwt-admin-token-xyz',
+          refresh_token: 'mock-jwt-admin-refresh-token-xyz',
+          token_type: 'Bearer',
+          expires_in: 86400,
+          refresh_expires_in: 604800,
           expires_at: new Date(Date.now() + 86400000).toISOString(),
           admin: {
             id: '00000000-0000-0000-0000-000000000002',
@@ -127,6 +134,45 @@ export class AuthRepository implements IAuthRepository {
         throw err;
       }
       logger.error('Failed to authenticate admin with Core API', err, { username: request.username });
+      throw err;
+    }
+  }
+
+  async refreshToken(request: AdminRefreshTokenRequest): Promise<AdminRefreshTokenResponse> {
+    if (this.shouldUseMock()) {
+      if (request.refresh_token.includes('invalid') || request.refresh_token === '') {
+        throw new UnauthorizedError('Invalid refresh token');
+      }
+      return {
+        token: 'mock-jwt-admin-token-refreshed',
+        refresh_token: 'mock-jwt-admin-refresh-token-rotated',
+        token_type: 'Bearer',
+        expires_in: 86400,
+        refresh_expires_in: 604800,
+        expires_at: new Date(Date.now() + 86400000).toISOString(),
+        admin: {
+          id: '00000000-0000-0000-0000-000000000002',
+          username: 'admin',
+          full_name: 'Platform Administrator',
+          role_id: '00000000-0000-0000-0000-000000000001',
+          role_name: 'Super Admin',
+          permissions: ['*'],
+        },
+      };
+    }
+
+    try {
+      const res = await this.client.post<CoreApiResponse<AdminRefreshTokenResponse>>(
+        '/v1/admin/refresh',
+        request
+      );
+      const payload = res.data ?? res;
+      return AdminRefreshTokenResponseSchema.parse(payload);
+    } catch (err: unknown) {
+      if (err instanceof UnauthorizedError) {
+        throw err;
+      }
+      logger.error('Failed to rotate admin token with Core API', err);
       throw err;
     }
   }
