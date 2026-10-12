@@ -34,3 +34,17 @@ export const AdminLoginResponseSchema = z.object({
 });
 
 export type AdminLoginResponse = z.infer<typeof AdminLoginResponseSchema>;
+
+/**
+ * Anonymous / Client Gateway Token Response Schema from Core API.
+ */
+export const AnonTokenResponseSchema = z.object({
+  anon_token: z.string(),
+  session_id: z.string(),
+  client_id: z.string(),
+  token_type: z.string().default('Bearer'),
+  expires_in: z.number().default(604800),
+  scopes: z.array(z.string()).default([]),
+});
+
+export type AnonTokenResponse = z.infer<typeof AnonTokenResponseSchema>;

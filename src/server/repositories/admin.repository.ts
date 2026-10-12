@@ -55,6 +55,7 @@ import { AUTH_COOKIES } from '../constants/auth.constant';
 import { IHttpClient, HttpClient } from '../datasources/http';
 import { env } from '../config/env';
 import { logger } from '../logger/pino.logger';
+import { defaultAuthRepository } from './auth.repository';
 
 /**
  * Core API response envelope model (dtos.APIResponse[T]).
@@ -473,7 +474,12 @@ export class AdminRepository implements IAdminRepository {
           } catch {
             // Outside Next.js request context (e.g. tests or background scripts)
           }
-          return env.CORE_API_ADMIN_TOKEN ? `Bearer ${env.CORE_API_ADMIN_TOKEN}` : null;
+          try {
+            const anonToken = await defaultAuthRepository.getGatewayAnonToken();
+            return `Bearer ${anonToken}`;
+          } catch {
+            return null;
+          }
         },
       });
   }

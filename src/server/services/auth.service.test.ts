@@ -20,6 +20,15 @@ describe('AuthService', () => {
 
     const mockRepo: IAuthRepository = {
       login: vi.fn().mockResolvedValue(mockResponse),
+      anonToken: vi.fn().mockResolvedValue({
+        anon_token: 'test-anon-token',
+        session_id: 's-1',
+        client_id: 'client-app',
+        token_type: 'Bearer',
+        expires_in: 604800,
+        scopes: [],
+      }),
+      getGatewayAnonToken: vi.fn().mockResolvedValue('test-anon-token'),
     };
 
     const service = new AuthService(mockRepo);
