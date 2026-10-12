@@ -24,12 +24,7 @@ export interface NavbarProps {
   className?: string;
 }
 
-const defaultLinks: NavLinkItem[] = [
-  { label: 'Documentation', href: '#' },
-  { label: 'Architecture', href: '#architecture' },
-  { label: 'Design System', href: '#components' },
-  { label: 'Health API', href: '/api/health' },
-];
+const defaultLinks: NavLinkItem[] = [];
 
 export const Navbar: React.FC<NavbarProps> = ({
   brandName = 'Youten AI CMS',
@@ -37,10 +32,10 @@ export const Navbar: React.FC<NavbarProps> = ({
   brandTag = 'CMS',
   links = defaultLinks,
   currentPath = '/',
-  showStatus = true,
+  showStatus = false,
   statusLabel = 'API Online',
-  ctaText = 'Get Started',
-  ctaHref = '#components',
+  ctaText = 'Dashboard',
+  ctaHref = '/',
   className = '',
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
