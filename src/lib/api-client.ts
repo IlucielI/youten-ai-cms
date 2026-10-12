@@ -63,10 +63,12 @@ export async function apiFetch<T>(
     headers,
   });
 
-  const isAuthBypassEndpoint =
-    endpoint.startsWith('/api/auth/login') ||
-    endpoint.startsWith('/api/auth/refresh') ||
-    endpoint.startsWith('/api/auth/logout');
+  const authBypassEndpoints = new Set([
+    '/api/auth/login',
+    '/api/auth/refresh',
+    '/api/auth/logout',
+  ]);
+  const isAuthBypassEndpoint = authBypassEndpoints.has(endpoint);
 
   if (response.status === 401 && !_retry && !isAuthBypassEndpoint) {
     const refreshed = await executeSilentRefresh();
